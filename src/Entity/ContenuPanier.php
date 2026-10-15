@@ -87,9 +87,6 @@ class ContenuPanier
         return $this;
     }
 
-    /**
-     * Calcule le sous-total de cette ligne de panier
-     */
     public function getSousTotal(): float
     {
         $prix = $this->produit?->getPrix() ?? 0.0;

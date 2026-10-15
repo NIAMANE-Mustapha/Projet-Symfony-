@@ -30,14 +30,11 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 180)]
     private ?string $email = null;
 
-    /**
-     * @var string Le mot de passe haché
-     */
     #[ORM\Column]
     private ?string $password = null;
 
     /**
-     * @var list<string> Les rôles de l'utilisateur
+     * @var list<string>
      */
     #[ORM\Column]
     private array $roles = [];
@@ -95,8 +92,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * Identifiant visuel représentant l'utilisateur.
-     *
      * @see UserInterface
      */
     public function getUserIdentifier(): string
@@ -127,7 +122,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function getRoles(): array
     {
         $roles = $this->roles;
-        // Garantie que chaque utilisateur a au moins le rôle ROLE_USER
         $roles[] = 'ROLE_USER';
 
         return array_values(array_unique($roles));
@@ -148,7 +142,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function eraseCredentials(): void
     {
-        // Nettoyage de données sensibles temporaires si nécessaire
     }
 
     /**
@@ -172,7 +165,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function removePanier(Panier $panier): static
     {
         if ($this->paniers->removeElement($panier)) {
-            // set the owning side to null (unless already changed)
             if ($panier->getUtilisateur() === $this) {
                 $panier->setUtilisateur(null);
             }
