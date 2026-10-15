@@ -113,9 +113,6 @@ class Panier
         return $this;
     }
 
-    /**
-     * Calcule le total du panier
-     */
     public function getTotal(): float
     {
         $total = 0.0;
