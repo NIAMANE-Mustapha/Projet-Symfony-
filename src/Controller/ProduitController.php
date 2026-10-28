@@ -13,6 +13,10 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use App\Form\ProduitType;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 final class ProduitController extends AbstractController
 {
@@ -26,7 +30,7 @@ final class ProduitController extends AbstractController
     }
 
     // Fiche détaillée d'un produit
-    #[Route('/produit/{id}', name: 'app_produit_show', methods: ['GET'])]
+    #[Route('/produit/{id}',name: 'app_produit_show',requirements: ['id' => '\d+'],methods: ['GET'])]
     public function show(Produit $produit): Response
     {
         return $this->render('produit/show.html.twig', [
@@ -117,4 +121,148 @@ final class ProduitController extends AbstractController
             'id' => $produit->getId(),
         ]);
     }
+    
+    // Ajouter un nouveau produit (administrateur)
+    #[Route('/produit/nouveau', name: 'app_produit_new', methods: ['GET', 'POST'])]
+    public function new(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        SluggerInterface $slugger
+    ): Response {
+        if (
+            !$this->isGranted('ROLE_ADMIN')
+            && !$this->isGranted('ROLE_SUPER_ADMIN')
+        ) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $produit = new Produit();
+        $form = $this->createForm(ProduitType::class, $produit);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            /** @var UploadedFile|null $photoFile */
+            $photoFile = $form->get('photoFile')->getData();
+
+            if ($photoFile) {
+                $produit->setPhoto(
+                    $this->enregistrerPhoto($photoFile, $slugger)
+                );
+            }
+
+            $entityManager->persist($produit);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Le produit a été ajouté.');
+
+            return $this->redirectToRoute('app_accueil');
+        }
+
+        return $this->render('produit/new.html.twig', [
+            'form' => $form,
+        ]);
+    }
+
+    // Modifier un produit existant (administrateur)
+    #[Route('/produit/{id}/modifier', name: 'app_produit_edit', methods: ['GET', 'POST'])]
+    public function edit(
+        Produit $produit,
+        Request $request,
+        EntityManagerInterface $entityManager,
+        SluggerInterface $slugger
+    ): Response {
+        if (
+            !$this->isGranted('ROLE_ADMIN')
+            && !$this->isGranted('ROLE_SUPER_ADMIN')
+        ) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $form = $this->createForm(ProduitType::class, $produit);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            /** @var UploadedFile|null $photoFile */
+            $photoFile = $form->get('photoFile')->getData();
+
+            // Si une nouvelle photo est envoyée, on remplace l'ancien nom.
+            if ($photoFile) {
+                $produit->setPhoto(
+                    $this->enregistrerPhoto($photoFile, $slugger)
+                );
+            }
+
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Le produit a été modifié.');
+
+            return $this->redirectToRoute('app_produit_show', [
+                'id' => $produit->getId(),
+            ]);
+        }
+
+        return $this->render('produit/edit.html.twig', [
+            'produit' => $produit,
+            'form' => $form,
+        ]);
+    }
+
+    // Supprimer un produit (administrateur)
+    #[Route('/produit/{id}/supprimer', name: 'app_produit_delete', methods: ['POST'])]
+    public function delete(
+        Produit $produit,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
+        if (
+            !$this->isGranted('ROLE_ADMIN')
+            && !$this->isGranted('ROLE_SUPER_ADMIN')
+        ) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$this->isCsrfTokenValid(
+            'delete_produit_' . $produit->getId(),
+            $request->request->get('_token')
+        )) {
+            throw $this->createAccessDeniedException(
+                'Jeton de sécurité invalide.'
+            );
+        }
+
+        $entityManager->remove($produit);
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Le produit a été supprimé.');
+
+        return $this->redirectToRoute('app_accueil');
+    }
+
+    // Enregistrer la photo dans public/uploads/produits
+    private function enregistrerPhoto(
+        UploadedFile $photo,
+        SluggerInterface $slugger
+    ): string {
+        $nomOriginal = pathinfo(
+            $photo->getClientOriginalName(),
+            PATHINFO_FILENAME
+        );
+
+        $nomSecurise = $slugger->slug($nomOriginal);
+        $extension = $photo->guessExtension() ?? 'bin';
+        $nomFichier = $nomSecurise . '-' . bin2hex(random_bytes(6))
+            . '.' . $extension;
+
+        $dossier = $this->getParameter('kernel.project_dir')
+            . '/public/uploads/produits';
+
+        if (!is_dir($dossier)) {
+            mkdir($dossier, 0775, true);
+        }
+
+        $photo->move($dossier, $nomFichier);
+
+        return $nomFichier;
+    }
+
 }

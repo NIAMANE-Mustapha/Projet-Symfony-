@@ -62,10 +62,19 @@
             color: white;
             text-decoration: none;
             cursor: pointer;
+            font-size: 14px;
         }
 
         .ajouter {
             background: #16a34a;
+        }
+
+        .modifier {
+            background: #2563eb;
+        }
+
+        .supprimer {
+            background: #dc2626;
         }
 
         .message {
@@ -73,6 +82,16 @@
             margin-bottom: 12px;
             border-radius: 6px;
             background: #dcfce7;
+        }
+
+        .message-danger {
+            background: #fee2e2;
+        }
+
+        .administration {
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
         }
 
         @media (max-width: 650px) {
@@ -95,7 +114,7 @@
         {% endfor %}
 
         {% for message in app.flashes('danger') %}
-            <div class="message">{{ message }}</div>
+            <div class="message message-danger">{{ message }}</div>
         {% endfor %}
 
         <section class="fiche">
@@ -113,7 +132,9 @@
             <div>
                 <h2>{{ produit.nom }}</h2>
 
-                <p>{{ produit.description|default('Aucune description disponible.') }}</p>
+                <p>
+                    {{ produit.description|default('Aucune description disponible.') }}
+                </p>
 
                 <p class="prix">
                     {{ produit.prix|number_format(2, ',', ' ') }} €
@@ -145,15 +166,41 @@
                         </form>
                     {% endif %}
                 {% else %}
-                    <p>Connectez-vous pour ajouter ce produit à votre panier.</p>
-                    {# Nous ajouterons ici le lien vers ta page de connexion. #}
+                    <p>
+                        <a href="{{ path('app_login') }}">
+                            Connectez-vous
+                        </a>
+                        pour ajouter ce produit à votre panier.
+                    </p>
                 {% endif %}
 
-                {% if is_granted('ROLE_ADMIN') %}
-                    <p>Administration du produit :</p>
+                {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_SUPER_ADMIN') %}
+                    <div class="administration">
+                        <h3>Administration du produit</h3>
 
-                    {# Nous ajouterons les boutons Modifier et Supprimer
-                       lorsque leurs routes seront créées. #}
+                        <a
+                            class="bouton modifier"
+                            href="{{ path('app_produit_edit', {'id': produit.id}) }}"
+                        >
+                            Modifier le produit
+                        </a>
+
+                        <form
+                            method="post"
+                            action="{{ path('app_produit_delete', {'id': produit.id}) }}"
+                            onsubmit="return confirm('Voulez-vous vraiment supprimer ce produit ?');"
+                        >
+                            <input
+                                type="hidden"
+                                name="_token"
+                                value="{{ csrf_token('delete_produit_' ~ produit.id) }}"
+                            >
+
+                            <button class="bouton supprimer" type="submit">
+                                Supprimer le produit
+                            </button>
+                        </form>
+                    </div>
                 {% endif %}
             </div>
         </section>

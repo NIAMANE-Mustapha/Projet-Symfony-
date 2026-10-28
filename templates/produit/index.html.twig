@@ -25,6 +25,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
         header h1 {
@@ -50,6 +52,7 @@
             align-items: center;
             margin-bottom: 25px;
             gap: 15px;
+            flex-wrap: wrap;
         }
 
         .ajouter {
@@ -104,6 +107,18 @@
             padding: 25px;
             border-radius: 8px;
         }
+
+        @media (max-width: 600px) {
+            header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            header a {
+                margin-left: 0;
+                margin-right: 12px;
+            }
+        }
     </style>
 </head>
 
@@ -116,20 +131,30 @@
 
             {% if app.user %}
                 <span>Bonjour {{ app.user.prenom }}</span>
+                <a href="{{ path('app_logout') }}">Déconnexion</a>
             {% else %}
-                <a href="#">Connexion</a>
+                <a href="{{ path('app_login') }}">Connexion</a>
+                <a href="{{ path('app_register') }}">Inscription</a>
             {% endif %}
         </nav>
     </header>
 
     <main>
+        {% for message in app.flashes('success') %}
+            <p class="vide">{{ message }}</p>
+        {% endfor %}
+
+        {% for message in app.flashes('danger') %}
+            <p class="vide">{{ message }}</p>
+        {% endfor %}
+
         <div class="titre">
             <div>
                 <h2>Nos produits</h2>
                 <p>Découvrez notre catalogue.</p>
             </div>
 
-            {% if is_granted('ROLE_ADMIN') %}
+            {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_SUPER_ADMIN') %}
                 <a class="ajouter" href="{{ path('app_produit_new') }}">
                     + Ajouter un produit
                 </a>
@@ -169,8 +194,10 @@
 
                             <p>Stock : {{ produit.stock }}</p>
 
-                            <a class="voir"
-                               href="{{ path('app_produit_show', {'id': produit.id}) }}">
+                            <a
+                                class="voir"
+                                href="{{ path('app_produit_show', {'id': produit.id}) }}"
+                            >
                                 Voir le produit
                             </a>
                         </div>

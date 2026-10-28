@@ -1,0 +1,16 @@
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Ajouter un produit{% endblock %}
+
+{% block body %}
+    <h1>Ajouter un produit</h1>
+
+    {{ form_start(form, {'attr': {'enctype': 'multipart/form-data'}}) }}
+        {{ form_widget(form) }}
+
+        <button type="submit">Ajouter le produit</button>
+    {{ form_end(form) }}
+
+    <a href="{{ path('app_accueil') }}">Retour à l'accueil</a>
+{% endblock %}
