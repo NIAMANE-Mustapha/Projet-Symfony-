@@ -1,0 +1,162 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ produit.nom }} - Ma Boutique</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            color: #222;
+        }
+
+        header {
+            background: #222;
+            color: white;
+            padding: 20px 5%;
+        }
+
+        header a {
+            color: #facc15;
+            text-decoration: none;
+        }
+
+        main {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .fiche {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+        }
+
+        .fiche img {
+            width: 100%;
+            max-height: 400px;
+            object-fit: contain;
+        }
+
+        .prix {
+            color: #16a34a;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .bouton {
+            display: inline-block;
+            border: none;
+            border-radius: 6px;
+            padding: 12px 18px;
+            margin: 5px 5px 5px 0;
+            background: #222;
+            color: white;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .ajouter {
+            background: #16a34a;
+        }
+
+        .message {
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            background: #dcfce7;
+        }
+
+        @media (max-width: 650px) {
+            .fiche {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Ma Boutique</h1>
+        <a href="{{ path('app_accueil') }}">← Retour aux produits</a>
+    </header>
+
+    <main>
+        {% for message in app.flashes('success') %}
+            <div class="message">{{ message }}</div>
+        {% endfor %}
+
+        {% for message in app.flashes('danger') %}
+            <div class="message">{{ message }}</div>
+        {% endfor %}
+
+        <section class="fiche">
+            <div>
+                {% if produit.photo %}
+                    <img
+                        src="{{ asset('uploads/produits/' ~ produit.photo) }}"
+                        alt="{{ produit.nom }}"
+                    >
+                {% else %}
+                    <p>Photo non disponible.</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <h2>{{ produit.nom }}</h2>
+
+                <p>{{ produit.description|default('Aucune description disponible.') }}</p>
+
+                <p class="prix">
+                    {{ produit.prix|number_format(2, ',', ' ') }} €
+                </p>
+
+                <p>
+                    {% if produit.stock > 0 %}
+                        Stock disponible : {{ produit.stock }}
+                    {% else %}
+                        Produit indisponible
+                    {% endif %}
+                </p>
+
+                {% if app.user %}
+                    {% if produit.stock > 0 %}
+                        <form
+                            method="post"
+                            action="{{ path('app_panier_ajouter', {'id': produit.id}) }}"
+                        >
+                            <input
+                                type="hidden"
+                                name="_token"
+                                value="{{ csrf_token('ajouter_panier_' ~ produit.id) }}"
+                            >
+
+                            <button class="bouton ajouter" type="submit">
+                                Ajouter au panier
+                            </button>
+                        </form>
+                    {% endif %}
+                {% else %}
+                    <p>Connectez-vous pour ajouter ce produit à votre panier.</p>
+                    {# Nous ajouterons ici le lien vers ta page de connexion. #}
+                {% endif %}
+
+                {% if is_granted('ROLE_ADMIN') %}
+                    <p>Administration du produit :</p>
+
+                    {# Nous ajouterons les boutons Modifier et Supprimer
+                       lorsque leurs routes seront créées. #}
+                {% endif %}
+            </div>
+        </section>
+    </main>
+</body>
+</html>
