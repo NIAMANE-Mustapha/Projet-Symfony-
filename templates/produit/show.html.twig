@@ -1,0 +1,95 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ produit.nom }} - {{ 'product.title'|trans }}{% endblock %}
+
+{% block body %}
+    <div style="margin-bottom: 1.5rem;">
+        <a href="{{ path('app_home') }}" class="btn btn-sm btn-secondary">
+            &larr; {{ 'common.back_to_products'|trans }}
+        </a>
+    </div>
+
+    <div class="product-detail-layout">
+        <!-- Galerie / Image -->
+        <div class="product-gallery">
+            {% if produit.photo %}
+                <img src="{{ asset(produit.photo) }}" alt="{{ produit.nom }}">
+            {% else %}
+                <div style="font-size: 5rem; padding: 4rem;">🛍️</div>
+            {% endif %}
+        </div>
+
+        <!-- Informations et actions -->
+        <div class="product-info-panel">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                {% if produit.stock > 0 %}
+                    <span class="badge badge-success">{{ 'common.in_stock'|trans }} ({{ produit.stock }} {{ 'common.units'|trans }})</span>
+                {% else %}
+                    <span class="badge badge-danger">{{ 'common.out_of_stock'|trans }}</span>
+                {% endif %}
+
+                <!-- Actions réservées au ROLE_ADMIN : Modifier ou Supprimer -->
+                {% if is_granted('ROLE_ADMIN') %}
+                    <div style="display: flex; gap: 0.5rem;">
+                        <a href="{{ path('app_produit_edit', {'id': produit.id}) }}" class="btn btn-sm btn-secondary">
+                            ✏️ {{ 'product.edit_product'|trans }}
+                        </a>
+                        <form method="post" action="{{ path('app_produit_delete', {'id': produit.id}) }}" onsubmit="return confirm('{{ 'common.confirm_delete'|trans }}');" style="display: inline-block;">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete_product_' ~ produit.id) }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                🗑️ {{ 'product.delete_product'|trans }}
+                            </button>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+
+            <h1>{{ produit.nom }}</h1>
+
+            <div class="product-detail-price">
+                {{ produit.prix|number_format(2, ',', ' ') }} {{ 'common.currency'|trans }}
+            </div>
+
+            <div class="product-description-text">
+                <h3 style="font-size: 1.05rem; margin-bottom: 0.5rem; color: var(--text-main);">{{ 'product.description'|trans }}</h3>
+                <p>{{ produit.description|default('Aucune description détaillée n\'est disponible pour ce produit.')|nl2br }}</p>
+            </div>
+
+            <!-- Formulaire d'ajout au panier : conditionné à la connexion de l'utilisateur -->
+            <div style="background: var(--bg-alt); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border);">
+                {% if is_granted('IS_AUTHENTICATED_REMEMBERED') %}
+                    {% if produit.stock > 0 %}
+                        <form method="post" action="{{ path('app_panier_add', {'id': produit.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('add_to_cart_' ~ produit.id) }}">
+                            
+                            <div style="display: flex; align-items: flex-end; gap: 1rem;">
+                                <div style="flex: 0 0 120px;">
+                                    <label for="quantite" class="form-label">{{ 'product.quantity'|trans }}</label>
+                                    <input type="number" id="quantite" name="quantite" class="form-control" value="1" min="1" max="{{ produit.stock }}" required>
+                                </div>
+                                <div style="flex: 1;">
+                                    <button type="submit" class="btn btn-primary" style="width: 100%; height: 42px;">
+                                        🛒 {{ 'product.add_to_cart'|trans }}
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    {% else %}
+                        <p style="color: var(--danger); font-weight: 600; text-align: center; margin: 0;">
+                            ⚠️ {{ 'common.out_of_stock'|trans }}
+                        </p>
+                    {% endif %}
+                {% else %}
+                    <div style="text-align: center;">
+                        <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                            🔒 {{ 'product.login_to_buy'|trans }}
+                        </p>
+                        <a href="{{ path('app_login') }}" class="btn btn-primary">
+                            {{ 'nav.login'|trans }}
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

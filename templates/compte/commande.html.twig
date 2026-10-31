@@ -1,0 +1,86 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'order.title'|trans({'%id%': commande.id}) }}{% endblock %}
+
+{% block body %}
+    <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+        <a href="{{ path('app_compte') }}" class="btn btn-sm btn-secondary">
+            &larr; {{ 'order.back_history'|trans }}
+        </a>
+        
+        <span class="badge badge-success" style="font-size: 0.9rem; padding: 0.4rem 1rem;">
+            ✓ Payée
+        </span>
+    </div>
+
+    <!-- En-tête de commande avec date et client -->
+    <div class="card" style="padding: 2rem; margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: gap; gap: 1rem;">
+            <div>
+                <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem;">
+                    📦 {{ 'order.title'|trans({'%id%': commande.id}) }}
+                </h1>
+                <p style="color: var(--text-muted); font-size: 1rem;">
+                    <strong>{{ 'order.date_label'|trans }}</strong> {{ commande.dateAchat ? commande.dateAchat|date('d/m/Y à H:i:s') : '-' }}
+                </p>
+                <p style="color: var(--text-muted); font-size: 1rem; margin-top: 0.25rem;">
+                    <strong>{{ 'order.client_label'|trans }}</strong> {{ commande.utilisateur.prenom }} {{ commande.utilisateur.nom }} ({{ commande.utilisateur.email }})
+                </p>
+            </div>
+
+            <div style="text-align: right;">
+                <div style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">
+                    {{ 'order.total_paid'|trans }}
+                </div>
+                <div style="font-size: 2rem; font-weight: 800; color: var(--primary);">
+                    {{ commande.total|number_format(2, ',', ' ') }} {{ 'common.currency'|trans }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Même tableau que la page panier (sans option d'achat ni suppression) -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>{{ 'cart.table.product'|trans }}</th>
+                    <th style="text-align: center;">{{ 'cart.table.quantity'|trans }}</th>
+                    <th style="text-align: right;">{{ 'cart.table.unit_price'|trans }}</th>
+                    <th style="text-align: right;">{{ 'cart.table.line_total'|trans }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in commande.contenuPaniers %}
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                {% if item.produit.photo %}
+                                    <img src="{{ asset(item.produit.photo) }}" alt="{{ item.produit.nom }}" style="width: 48px; height: 48px; object-fit: cover; border-radius: var(--radius-sm);">
+                                {% else %}
+                                    <div style="width: 48px; height: 48px; background: var(--bg-alt); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); font-size: 1.4rem;">
+                                        🛍️
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <a href="{{ path('app_produit_show', {'id': item.produit.id}) }}" style="font-weight: 600; color: var(--text-main);">
+                                        {{ item.produit.nom }}
+                                    </a>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="text-align: center; font-weight: 600;">
+                            {{ item.quantite }}
+                        </td>
+                        <td style="text-align: right; color: var(--text-muted);">
+                            {{ item.produit.prix|number_format(2, ',', ' ') }} {{ 'common.currency'|trans }}
+                        </td>
+                        <td style="text-align: right; font-weight: 700; color: var(--text-main);">
+                            {{ item.sousTotal|number_format(2, ',', ' ') }} {{ 'common.currency'|trans }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

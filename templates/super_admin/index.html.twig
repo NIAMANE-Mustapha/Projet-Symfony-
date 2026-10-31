@@ -1,0 +1,149 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'super_admin.title'|trans }}{% endblock %}
+
+{% block body %}
+    <div style="margin-bottom: 2.5rem;">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+            <h1 style="font-size: 2.2rem; font-weight: 800; color: var(--text-main);">
+                ⚡ {{ 'super_admin.title'|trans }}
+            </h1>
+            <span class="badge badge-superadmin" style="font-size: 0.85rem; padding: 0.35rem 0.8rem;">
+                ROLE_SUPER_ADMIN
+            </span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 1.05rem;">
+            {{ 'super_admin.subtitle'|trans }}
+        </p>
+    </div>
+
+    <!-- Section 1 : Paniers non achetés (panier en cours / abandonnés) -->
+    <div class="card" style="padding: 2rem; margin-bottom: 3rem;">
+        <div style="margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.4rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                🛒 {{ 'super_admin.unpurchased_carts_title'|trans }}
+                <span class="badge badge-primary">{{ paniers|length }}</span>
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem;">
+                {{ 'super_admin.unpurchased_carts_desc'|trans }}
+            </p>
+        </div>
+
+        {% if paniers is empty %}
+            <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">
+                {{ 'super_admin.no_unpurchased_carts'|trans }}
+            </p>
+        {% else %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th style="width: 120px;">{{ 'super_admin.cart_id'|trans }}</th>
+                            <th style="width: 250px;">{{ 'super_admin.user'|trans }}</th>
+                            <th>{{ 'super_admin.cart_content'|trans }}</th>
+                            <th style="text-align: right; width: 140px;">{{ 'super_admin.cart_total'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for panier in paniers %}
+                            <tr>
+                                <td style="font-weight: 700; color: var(--primary);">
+                                    Panier #{{ panier.id }}
+                                </td>
+                                <td>
+                                    <strong>{{ panier.utilisateur.prenom }} {{ panier.utilisateur.nom }}</strong>
+                                    <div style="font-size: 0.825rem; color: var(--text-muted);">
+                                        {{ panier.utilisateur.email }}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if panier.contenuPaniers is empty %}
+                                        <em style="color: var(--text-light);">(Panier vide)</em>
+                                    {% else %}
+                                        <ul style="list-style-type: none; padding: 0; margin: 0; font-size: 0.9rem;">
+                                            {% for item in panier.contenuPaniers %}
+                                                <li style="padding: 0.25rem 0; display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border);">
+                                                    <span>
+                                                        <strong>{{ item.quantite }}x</strong>
+                                                        <a href="{{ path('app_produit_show', {'id': item.produit.id}) }}" target="_blank">
+                                                            {{ item.produit.nom }}
+                                                        </a>
+                                                        <span style="color: var(--text-muted); font-size: 0.825rem;">({{ item.produit.prix|number_format(2, ',', ' ') }} {{ 'common.currency'|trans }}/u)</span>
+                                                    </span>
+                                                    <span style="font-weight: 600;">
+                                                        {{ item.sousTotal|number_format(2, ',', ' ') }} {{ 'common.currency'|trans }}
+                                                    </span>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </td>
+                                <td style="text-align: right; font-weight: 800; font-size: 1.1rem; color: var(--primary);">
+                                    {{ panier.total|number_format(2, ',', ' ') }} {{ 'common.currency'|trans }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Section 2 : Utilisateurs inscrits aujourd'hui (du plus récent au plus ancien) -->
+    <div class="card" style="padding: 2rem;">
+        <div style="margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.4rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                👥 {{ 'super_admin.users_today_title'|trans }}
+                <span class="badge badge-success">{{ utilisateurs|length }}</span>
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem;">
+                {{ 'super_admin.users_today_desc'|trans }}
+            </p>
+        </div>
+
+        {% if utilisateurs is empty %}
+            <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">
+                {{ 'super_admin.no_users_today'|trans }}
+            </p>
+        {% else %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>{{ 'super_admin.user_name'|trans }}</th>
+                            <th>{{ 'super_admin.user_email'|trans }}</th>
+                            <th>Rôles</th>
+                            <th style="text-align: right;">{{ 'super_admin.registration_date'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in utilisateurs %}
+                            <tr>
+                                <td style="font-weight: 600;">
+                                    {{ user.prenom }} {{ user.nom }}
+                                </td>
+                                <td style="color: var(--text-muted);">
+                                    {{ user.email }}
+                                </td>
+                                <td>
+                                    {% for role in user.roles %}
+                                        {% if role == 'ROLE_SUPER_ADMIN' %}
+                                            <span class="badge badge-superadmin">Super Admin</span>
+                                        {% elseif role == 'ROLE_ADMIN' %}
+                                            <span class="badge badge-admin">Admin</span>
+                                        {% elseif role == 'ROLE_USER' %}
+                                            <span class="badge badge-primary">User</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                                <td style="text-align: right; font-weight: 600; color: var(--text-main);">
+                                    {{ user.dateInscription ? user.dateInscription|date('d/m/Y à H:i:s') : '-' }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
