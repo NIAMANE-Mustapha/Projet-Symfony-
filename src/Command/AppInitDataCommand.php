@@ -32,7 +32,6 @@ class AppInitDataCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $userRepo = $this->entityManager->getRepository(Utilisateur::class);
 
-        // 1. Création du compte Super Admin
         $superAdmin = $userRepo->findOneBy(['email' => 'superadmin@shop.com']);
         if (!$superAdmin) {
             $superAdmin = new Utilisateur();
@@ -46,7 +45,6 @@ class AppInitDataCommand extends Command
             $io->note('Création du compte Super Admin: superadmin@shop.com / password');
         }
 
-        // 2. Création du compte Admin
         $admin = $userRepo->findOneBy(['email' => 'admin@shop.com']);
         if (!$admin) {
             $admin = new Utilisateur();
@@ -60,7 +58,6 @@ class AppInitDataCommand extends Command
             $io->note('Création du compte Admin: admin@shop.com / password');
         }
 
-        // 3. Création d'un compte Utilisateur standard
         $client = $userRepo->findOneBy(['email' => 'user@shop.com']);
         if (!$client) {
             $client = new Utilisateur();
@@ -74,7 +71,6 @@ class AppInitDataCommand extends Command
             $io->note('Création du compte Client: user@shop.com / password');
         }
 
-        // 4. Création des produits initiaux
         $produitRepo = $this->entityManager->getRepository(Produit::class);
         $sampleProducts = [
             [
@@ -129,7 +125,6 @@ class AppInitDataCommand extends Command
 
         $this->entityManager->flush();
 
-        // 5. Création d'un panier non acheté pour le client afin d'illustrer la vue Super Admin
         $panierRepo = $this->entityManager->getRepository(Panier::class);
         $activeCart = $panierRepo->findOneBy(['utilisateur' => $client, 'etat' => false]);
         if (!$activeCart && $client) {

@@ -22,7 +22,6 @@
         {% endblock %}
     </head>
     <body>
-        <!-- Header / Navigation adaptée aux rôles -->
         <header class="navbar">
             <div class="container navbar-inner">
                 <a href="{{ path('app_home') }}" class="navbar-brand">
@@ -70,7 +69,6 @@
                 </nav>
 
                 <div class="navbar-actions">
-                    <!-- Sélecteur de langue (FR / EN) -->
                     <div class="locale-switcher">
                         <a href="{{ path('app_change_locale', {'locale': 'fr'}) }}" class="locale-btn {% if app.request.locale == 'fr' %}active{% endif %}" title="Français">
                             🇫🇷 FR
@@ -80,7 +78,6 @@
                         </a>
                     </div>
 
-                    <!-- Authentification & Profil -->
                     {% if app.user %}
                         <div style="display: flex; align-items: center; gap: 0.75rem;">
                             <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-main);">
@@ -109,10 +106,8 @@
             </div>
         </header>
 
-        <!-- Contenu principal -->
         <main class="main-content">
             <div class="container">
-                <!-- Messages Flash -->
                 {% set flash_messages = app.flashes %}
                 {% if flash_messages|length > 0 %}
                     <div class="flash-container">
@@ -130,7 +125,6 @@
             </div>
         </main>
 
-        <!-- Footer -->
         <footer class="footer">
             <div class="container footer-content">
                 <div>

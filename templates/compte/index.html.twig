@@ -10,7 +10,6 @@
     </div>
 
     <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 2.5rem; align-items: start;">
-        <!-- Formulaire de modification du profil -->
         <div class="card" style="padding: 2rem;">
             <h2 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text-main);">
                 ⚙️ {{ 'account.profile_title'|trans }}
@@ -56,7 +55,6 @@
             {{ form_end(form) }}
         </div>
 
-        <!-- Historique des commandes de l'utilisateur -->
         <div>
             <div class="card" style="padding: 2rem;">
                 <h2 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text-main);">
@@ -82,7 +80,7 @@
                                 {% for cmd in commandes %}
                                     <tr style="cursor: pointer;" onclick="window.location='{{ path('app_commande_show', {'id': cmd.id}) }}'">
                                         <td style="font-weight: 700; color: var(--primary);">
-                                            #{{ cmd.id }}
+                                             #{{ cmd.id }}
                                         </td>
                                         <td style="color: var(--text-muted);">
                                             {{ cmd.dateAchat ? cmd.dateAchat|date('d/m/Y H:i') : '-' }}
@@ -91,7 +89,6 @@
                                             {{ cmd.total|number_format(2, ',', ' ') }} {{ 'common.currency'|trans }}
                                         </td>
                                         <td style="text-align: center;">
-                                            <!-- Au clic d’une commande, on doit arriver sur une page qui affiche le contenu de la commande -->
                                             <a href="{{ path('app_commande_show', {'id': cmd.id}) }}" class="btn btn-sm btn-secondary" onclick="event.stopPropagation();">
                                                 🔍 {{ 'account.order_view'|trans }}
                                             </a>

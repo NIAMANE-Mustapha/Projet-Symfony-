@@ -3,14 +3,12 @@
 {% block title %}{{ 'home.title'|trans }}{% endblock %}
 
 {% block body %}
-    <!-- Hero Banner -->
     <div class="hero">
         <div>
             <h1 class="hero-title">{{ 'home.title'|trans }}</h1>
             <p class="hero-subtitle">{{ 'home.subtitle'|trans }}</p>
         </div>
         
-        <!-- Si l'utilisateur est connecté avec le rôle ROLE_ADMIN, il peut ajouter un produit sur cette page -->
         {% if is_granted('ROLE_ADMIN') %}
             <div>
                 <a href="{{ path('app_produit_new') }}" class="btn btn-lg btn-primary" style="background: #fff; color: var(--primary); box-shadow: 0 4px 14px rgba(0,0,0,0.25);">
@@ -20,7 +18,6 @@
         {% endif %}
     </div>
 
-    <!-- Grille des produits -->
     {% if produits is empty %}
         <div class="card" style="padding: 3rem; text-align: center;">
             <p style="color: var(--text-muted); font-size: 1.1rem;">{{ 'home.no_products'|trans }}</p>
@@ -63,7 +60,6 @@
                                 {{ produit.prix|number_format(2, ',', ' ') }} {{ 'common.currency'|trans }}
                             </div>
 
-                            <!-- Au clic d'un produit on arrive sur la fiche du produit -->
                             <a href="{{ path('app_produit_show', {'id': produit.id}) }}" class="btn btn-sm btn-primary">
                                 {{ 'home.view_product'|trans }} &rarr;
                             </a>

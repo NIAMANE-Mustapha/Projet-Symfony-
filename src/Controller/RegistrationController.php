@@ -12,9 +12,6 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-/**
- * Contrôleur gérant l'inscription d'un nouvel internaute.
- */
 class RegistrationController extends AbstractController
 {
     #[Route('/inscription', name: 'app_register')]
@@ -24,7 +21,6 @@ class RegistrationController extends AbstractController
         EntityManagerInterface $entityManager,
         TranslatorInterface $translator
     ): Response {
-        // Si l'utilisateur est déjà connecté, redirection vers l'accueil
         if ($this->getUser()) {
             return $this->redirectToRoute('app_home');
         }
@@ -34,15 +30,11 @@ class RegistrationController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Hachage sécurisé du mot de passe
             /** @var string $plainPassword */
             $plainPassword = $form->get('plainPassword')->getData();
             $user->setPassword($userPasswordHasher->hashPassword($user, $plainPassword));
-
-            // Rôle utilisateur par défaut
             $user->setRoles(['ROLE_USER']);
 
-            // La date d'inscription est automatiquement initialisée dans l'entité
             if (!$user->getDateInscription()) {
                 $user->setDateInscription(new \DateTimeImmutable());
             }
@@ -50,7 +42,6 @@ class RegistrationController extends AbstractController
             $entityManager->persist($user);
             $entityManager->flush();
 
-            // Message flash de succès
             $this->addFlash('success', $translator->trans('flash.registered'));
 
             return $this->redirectToRoute('app_login');
