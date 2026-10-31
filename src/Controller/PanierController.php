@@ -16,22 +16,15 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-/**
- * Contrôleur gérant le panier d'achat de l'utilisateur connecté.
- */
 #[IsGranted('ROLE_USER')]
 class PanierController extends AbstractController
 {
-    /**
-     * Affiche le panier en cours (non payé) de l'internaute connecté.
-     */
     #[Route('/panier', name: 'app_panier', methods: ['GET'])]
     public function index(PanierRepository $panierRepository): Response
     {
         /** @var Utilisateur $user */
         $user = $this->getUser();
 
-        // Récupération du panier actif non payé (etat = false)
         $panier = $panierRepository->findActiveCartForUser($user);
 
         return $this->render('panier/index.html.twig', [
@@ -39,9 +32,6 @@ class PanierController extends AbstractController
         ]);
     }
 
-    /**
-     * Ajoute un produit au panier de l'internaute connecté.
-     */
     #[Route('/panier/ajouter/{id}', name: 'app_panier_add', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function add(
         Produit $produit,
@@ -59,16 +49,13 @@ class PanierController extends AbstractController
             return $this->redirectToRoute('app_produit_show', ['id' => $produit->getId()]);
         }
 
-        // Récupération de la quantité demandée
         $quantite = max(1, (int) $request->request->get('quantite', 1));
 
-        // Vérification de la disponibilité du stock
         if ($produit->getStock() < $quantite) {
             $this->addFlash('danger', $translator->trans('flash.insufficient_stock', ['%stock%' => $produit->getStock()]));
             return $this->redirectToRoute('app_produit_show', ['id' => $produit->getId()]);
         }
 
-        // Récupération ou création du panier actif (non payé)
         $panier = $panierRepository->findActiveCartForUser($user);
         if (!$panier) {
             $panier = new Panier();
@@ -77,7 +64,6 @@ class PanierController extends AbstractController
             $entityManager->persist($panier);
         }
 
-        // Vérifier si le produit est déjà présent dans le panier
         $existingItem = null;
         foreach ($panier->getContenuPaniers() as $item) {
             if ($item->getProduit() && $item->getProduit()->getId() === $produit->getId()) {
@@ -111,9 +97,6 @@ class PanierController extends AbstractController
         return $this->redirectToRoute('app_panier');
     }
 
-    /**
-     * Supprime un article du panier.
-     */
     #[Route('/panier/supprimer/{id}', name: 'app_panier_remove', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function remove(
         ContenuPanier $contenuPanier,
@@ -124,7 +107,6 @@ class PanierController extends AbstractController
         /** @var Utilisateur $user */
         $user = $this->getUser();
 
-        // Sécurité : s'assurer que le contenu appartient bien au panier de l'utilisateur connecté
         if ($contenuPanier->getPanier()?->getUtilisateur() !== $user || $contenuPanier->getPanier()?->isEtat()) {
             $this->addFlash('danger', $translator->trans('flash.access_denied'));
             return $this->redirectToRoute('app_panier');
@@ -145,9 +127,6 @@ class PanierController extends AbstractController
         return $this->redirectToRoute('app_panier');
     }
 
-    /**
-     * Achat et validation du panier en cours.
-     */
     #[Route('/panier/acheter', name: 'app_panier_checkout', methods: ['POST'])]
     public function checkout(
         Request $request,
@@ -170,7 +149,6 @@ class PanierController extends AbstractController
             return $this->redirectToRoute('app_panier');
         }
 
-        // Vérification des stocks pour l'ensemble des articles
         foreach ($panier->getContenuPaniers() as $item) {
             $produit = $item->getProduit();
             if (!$produit || $produit->getStock() < $item->getQuantite()) {
@@ -179,13 +157,11 @@ class PanierController extends AbstractController
             }
         }
 
-        // Décrémentation des stocks des produits
         foreach ($panier->getContenuPaniers() as $item) {
             $produit = $item->getProduit();
             $produit->setStock($produit->getStock() - $item->getQuantite());
         }
 
-        // Passage à l'état payé (true) et attribution automatique de la date d'achat
         $panier->setEtat(true);
         $panier->setDateAchat(new \DateTimeImmutable());
 

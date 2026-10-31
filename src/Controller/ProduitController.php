@@ -16,14 +16,8 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-/**
- * Contrôleur gérant l'affichage de la fiche produit ainsi que le CRUD pour les administrateurs.
- */
 class ProduitController extends AbstractController
 {
-    /**
-     * Fiche détaillée d'un produit.
-     */
     #[Route('/produit/{id}', name: 'app_produit_show', requirements: ['id' => '\d+'], methods: ['GET'])]
     public function show(Produit $produit): Response
     {
@@ -32,9 +26,6 @@ class ProduitController extends AbstractController
         ]);
     }
 
-    /**
-     * Création d'un nouveau produit (réservé aux administrateurs).
-     */
     #[Route('/admin/produit/nouveau', name: 'app_produit_new', methods: ['GET', 'POST'])]
     #[IsGranted('ROLE_ADMIN')]
     public function new(
@@ -83,9 +74,6 @@ class ProduitController extends AbstractController
         ]);
     }
 
-    /**
-     * Modification d'un produit existant (réservé aux administrateurs).
-     */
     #[Route('/admin/produit/{id}/modifier', name: 'app_produit_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
     #[IsGranted('ROLE_ADMIN')]
     public function edit(
@@ -113,7 +101,6 @@ class ProduitController extends AbstractController
                 }
 
                 try {
-                    // Suppression de l'ancienne image si existante
                     if ($produit->getPhoto()) {
                         $oldPath = $this->getParameter('kernel.project_dir') . '/public/' . $produit->getPhoto();
                         if (file_exists($oldPath)) {
@@ -141,9 +128,6 @@ class ProduitController extends AbstractController
         ]);
     }
 
-    /**
-     * Suppression d'un produit (réservé aux administrateurs avec validation CSRF).
-     */
     #[Route('/admin/produit/{id}/supprimer', name: 'app_produit_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
     public function delete(
@@ -154,7 +138,6 @@ class ProduitController extends AbstractController
     ): Response {
         $token = $request->request->get('_token');
         if ($this->isCsrfTokenValid('delete_product_' . $produit->getId(), (string) $token)) {
-            // Suppression de l'image associée du disque
             if ($produit->getPhoto()) {
                 $filePath = $this->getParameter('kernel.project_dir') . '/public/' . $produit->getPhoto();
                 if (file_exists($filePath)) {

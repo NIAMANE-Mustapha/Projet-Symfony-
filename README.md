@@ -5,7 +5,7 @@ Projet réalisé dans le cadre du cours de Symfony.
 ## Membres du groupe
 
 - Mustapha Niamane
-- [Nom Prénom de votre binôme/trinôme]
+- Ziad Ghanem
 
 **Rendu pour :** `yoanncoualan`  
 **Date limite :** Dimanche 10 novembre 2026 à 23h59

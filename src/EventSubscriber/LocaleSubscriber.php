@@ -6,9 +6,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
-/**
- * Permet de définir la langue de l'application selon la préférence stockée en session.
- */
 class LocaleSubscriber implements EventSubscriberInterface
 {
     public function __construct(
@@ -23,7 +20,6 @@ class LocaleSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // Récupération de la locale stockée en session
         if ($locale = $request->getSession()->get('_locale')) {
             $request->setLocale($locale);
         } else {
