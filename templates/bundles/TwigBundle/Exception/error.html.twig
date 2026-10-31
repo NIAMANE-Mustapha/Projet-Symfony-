@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'errors.generic_error_title'|trans }}{% endblock %}
+
+{% block body %}
+    <div class="card" style="padding: 4rem 2rem; text-align: center; max-width: 600px; margin: 3rem auto;">
+        <div style="font-size: 5rem; margin-bottom: 1rem;">⚠️</div>
+        <h1 style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-bottom: 1rem;">
+            {{ 'errors.generic_error_title'|trans }}
+        </h1>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">
+            {{ 'errors.generic_error_desc'|trans }}
+        </p>
+        <div>
+            <a href="{{ path('app_home') }}" class="btn btn-primary">
+                🏠 {{ 'errors.back_home'|trans }}
+            </a>
+        </div>
+    </div>
+{% endblock %}

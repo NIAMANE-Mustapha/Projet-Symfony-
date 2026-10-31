@@ -1,0 +1,101 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'cart.title'|trans }}{% endblock %}
+
+{% block body %}
+    <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2.2rem; font-weight: 800; color: var(--text-main);">
+            🛒 {{ 'cart.title'|trans }}
+        </h1>
+        <p style="color: var(--text-muted); font-size: 1.05rem;">
+            {{ 'cart.subtitle'|trans }}
+        </p>
+    </div>
+
+    {% if panier is null or panier.contenuPaniers is empty %}
+        <div class="card" style="padding: 4rem 2rem; text-align: center;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🛒</div>
+            <h2 style="font-size: 1.4rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+                {{ 'cart.empty'|trans }}
+            </h2>
+            <div>
+                <a href="{{ path('app_home') }}" class="btn btn-primary">
+                    🛍️ {{ 'cart.continue_shopping'|trans }}
+                </a>
+            </div>
+        </div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>{{ 'cart.table.product'|trans }}</th>
+                        <th style="text-align: center;">{{ 'cart.table.quantity'|trans }}</th>
+                        <th style="text-align: right;">{{ 'cart.table.unit_price'|trans }}</th>
+                        <th style="text-align: right;">{{ 'cart.table.line_total'|trans }}</th>
+                        <th style="text-align: center;">{{ 'cart.table.action'|trans }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in panier.contenuPaniers %}
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    {% if item.produit.photo %}
+                                        <img src="{{ asset(item.produit.photo) }}" alt="{{ item.produit.nom }}" style="width: 48px; height: 48px; object-fit: cover; border-radius: var(--radius-sm);">
+                                    {% else %}
+                                        <div style="width: 48px; height: 48px; background: var(--bg-alt); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); font-size: 1.4rem;">
+                                            🛍️
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <a href="{{ path('app_produit_show', {'id': item.produit.id}) }}" style="font-weight: 600; color: var(--text-main);">
+                                            {{ item.produit.nom }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="text-align: center; font-weight: 600;">
+                                {{ item.quantite }}
+                            </td>
+                            <td style="text-align: right; color: var(--text-muted);">
+                                {{ item.produit.prix|number_format(2, ',', ' ') }} {{ 'common.currency'|trans }}
+                            </td>
+                            <td style="text-align: right; font-weight: 700; color: var(--text-main);">
+                                {{ item.sousTotal|number_format(2, ',', ' ') }} {{ 'common.currency'|trans }}
+                            </td>
+                            <td style="text-align: center;">
+                                <form method="post" action="{{ path('app_panier_remove', {'id': item.id}) }}" onsubmit="return confirm('{{ 'common.confirm_delete'|trans }}');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_item_' ~ item.id) }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ 'cart.table.action'|trans }}">
+                                        🗑️ {{ 'common.delete'|trans }}
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Récapitulatif et bouton d'achat -->
+        <div class="cart-summary-box">
+            <div class="cart-summary-total">
+                {{ 'cart.total'|trans }} <span>{{ panier.total|number_format(2, ',', ' ') }} {{ 'common.currency'|trans }}</span>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <a href="{{ path('app_home') }}" class="btn btn-secondary">
+                    🛍️ {{ 'cart.continue_shopping'|trans }}
+                </a>
+
+                <form method="post" action="{{ path('app_panier_checkout') }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('cart_checkout') }}">
+                    <button type="submit" class="btn btn-lg btn-success">
+                        💳 {{ 'cart.checkout'|trans }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

@@ -29,4 +29,25 @@ class UtilisateurRepository extends ServiceEntityRepository implements PasswordU
         $this->getEntityManager()->persist($user);
         $this->getEntityManager()->flush();
     }
+
+    /**
+     * Récupère les utilisateurs inscrits aujourd'hui, triés du plus récent au plus ancien.
+     * Utilisé pour la vue SUPER_ADMIN.
+     *
+     * @return Utilisateur[]
+     */
+    public function findRegisteredToday(): array
+    {
+        $todayStart = new \DateTimeImmutable('today midnight');
+        $todayEnd = new \DateTimeImmutable('tomorrow midnight -1 second');
+
+        return $this->createQueryBuilder('u')
+            ->where('u.dateInscription >= :start')
+            ->andWhere('u.dateInscription <= :end')
+            ->setParameter('start', $todayStart)
+            ->setParameter('end', $todayEnd)
+            ->orderBy('u.dateInscription', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

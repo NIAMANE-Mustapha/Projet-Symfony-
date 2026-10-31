@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}403 - {{ 'errors.access_denied_title'|trans }}{% endblock %}
+
+{% block body %}
+    <div class="card" style="padding: 4rem 2rem; text-align: center; max-width: 600px; margin: 3rem auto;">
+        <div style="font-size: 5rem; margin-bottom: 1rem;">⛔</div>
+        <h1 style="font-size: 2.5rem; font-weight: 800; color: var(--danger); margin-bottom: 1rem;">
+            403
+        </h1>
+        <h2 style="font-size: 1.3rem; font-weight: 600; color: var(--text-main); margin-bottom: 1rem;">
+            {{ 'errors.access_denied_title'|trans }}
+        </h2>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">
+            {{ 'errors.access_denied_desc'|trans }}
+        </p>
+        <div>
+            <a href="{{ path('app_home') }}" class="btn btn-primary">
+                🏠 {{ 'errors.back_home'|trans }}
+            </a>
+        </div>
+    </div>
+{% endblock %}

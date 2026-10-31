@@ -39,6 +39,9 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private array $roles = [];
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $dateInscription = null;
+
     /**
      * @var Collection<int, Panier>
      */
@@ -48,6 +51,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function __construct()
     {
         $this->paniers = new ArrayCollection();
+        $this->dateInscription = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -169,6 +173,18 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
                 $panier->setUtilisateur(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getDateInscription(): ?\DateTimeImmutable
+    {
+        return $this->dateInscription;
+    }
+
+    public function setDateInscription(?\DateTimeImmutable $dateInscription): static
+    {
+        $this->dateInscription = $dateInscription;
 
         return $this;
     }

@@ -1,24 +1,149 @@
 <!DOCTYPE html>
-<html>
+<html lang="{{ app.request.locale }}">
     <head>
         <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}{{ 'common.app_name'|trans }}{% endblock %} - {{ 'common.app_name'|trans }}</title>
+        
+        <!-- Google Fonts: Inter -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+        
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>🛍️</text></svg>">
+        
+        <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
+        
         {% block stylesheets %}
         {% endblock %}
 
         {% block javascripts %}
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
-
-        {% set frankenphp_hot_reload = app.request.server.get('FRANKENPHP_HOT_RELOAD') %}
-        {% if frankenphp_hot_reload %}
-        <meta name="frankenphp-hot-reload:url" content="{{ frankenphp_hot_reload }}">
-        <script src="https://cdn.jsdelivr.net/npm/idiomorph"></script>
-        <script src="https://cdn.jsdelivr.net/npm/frankenphp-hot-reload/+esm" type="module"></script>
-        {% endif %}
     </head>
     <body>
-        {% block body %}{% endblock %}
+        <!-- Header / Navigation adaptée aux rôles -->
+        <header class="navbar">
+            <div class="container navbar-inner">
+                <a href="{{ path('app_home') }}" class="navbar-brand">
+                    <span class="brand-icon">🛍️</span>
+                    <span>{{ 'common.app_name'|trans }}</span>
+                </a>
+
+                <nav>
+                    <ul class="navbar-nav">
+                        <li>
+                            <a href="{{ path('app_home') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_home' %}active{% endif %}">
+                                🏠 {{ 'nav.home'|trans }}
+                            </a>
+                        </li>
+
+                        {% if is_granted('ROLE_USER') %}
+                            <li>
+                                <a href="{{ path('app_panier') }}" class="nav-link {% if app.request.attributes.get('_route') starts with 'app_panier' %}active{% endif %}">
+                                    🛒 {{ 'nav.cart'|trans }}
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ path('app_compte') }}" class="nav-link {% if app.request.attributes.get('_route') in ['app_compte', 'app_commande_show'] %}active{% endif %}">
+                                    👤 {{ 'nav.account'|trans }}
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <li>
+                                <a href="{{ path('app_produit_new') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_produit_new' %}active{% endif %}" style="color: var(--primary); font-weight: 600;">
+                                    ➕ {{ 'nav.add_product'|trans }}
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% if is_granted('ROLE_SUPER_ADMIN') %}
+                            <li>
+                                <a href="{{ path('app_super_admin') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_super_admin' %}active{% endif %}" style="color: #9333ea; font-weight: 700;">
+                                    ⚡ {{ 'nav.super_admin'|trans }}
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+
+                <div class="navbar-actions">
+                    <!-- Sélecteur de langue (FR / EN) -->
+                    <div class="locale-switcher">
+                        <a href="{{ path('app_change_locale', {'locale': 'fr'}) }}" class="locale-btn {% if app.request.locale == 'fr' %}active{% endif %}" title="Français">
+                            🇫🇷 FR
+                        </a>
+                        <a href="{{ path('app_change_locale', {'locale': 'en'}) }}" class="locale-btn {% if app.request.locale == 'en' %}active{% endif %}" title="English">
+                            🇬🇧 EN
+                        </a>
+                    </div>
+
+                    <!-- Authentification & Profil -->
+                    {% if app.user %}
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-main);">
+                                {{ 'nav.greeting'|trans({'%name%': app.user.prenom ~ ' ' ~ app.user.nom}) }}
+                            </span>
+                            
+                            {% if is_granted('ROLE_SUPER_ADMIN') %}
+                                <span class="badge badge-superadmin">{{ 'nav.role_super_admin'|trans }}</span>
+                            {% elseif is_granted('ROLE_ADMIN') %}
+                                <span class="badge badge-admin">{{ 'nav.role_admin'|trans }}</span>
+                            {% endif %}
+
+                            <a href="{{ path('app_logout') }}" class="btn btn-sm btn-secondary">
+                                {{ 'nav.logout'|trans }}
+                            </a>
+                        </div>
+                    {% else %}
+                        <a href="{{ path('app_login') }}" class="btn btn-sm btn-secondary">
+                            {{ 'nav.login'|trans }}
+                        </a>
+                        <a href="{{ path('app_register') }}" class="btn btn-sm btn-primary">
+                            {{ 'nav.register'|trans }}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+
+        <!-- Contenu principal -->
+        <main class="main-content">
+            <div class="container">
+                <!-- Messages Flash -->
+                {% set flash_messages = app.flashes %}
+                {% if flash_messages|length > 0 %}
+                    <div class="flash-container">
+                        {% for type, messages in flash_messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ type == 'error' ? 'danger' : type }}">
+                                    <span>{{ message }}</span>
+                                </div>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% block body %}{% endblock %}
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container footer-content">
+                <div>
+                    <strong>{{ 'common.app_name'|trans }}</strong> &copy; {{ "now"|date("Y") }} - Tous droits réservés.
+                </div>
+                <div class="footer-links">
+                    <a href="{{ path('app_home') }}">{{ 'nav.home'|trans }}</a>
+                    {% if is_granted('ROLE_USER') %}
+                        <a href="{{ path('app_panier') }}">{{ 'nav.cart'|trans }}</a>
+                        <a href="{{ path('app_compte') }}">{{ 'nav.account'|trans }}</a>
+                    {% endif %}
+                </div>
+            </div>
+        </footer>
     </body>
 </html>
