@@ -6,31 +6,23 @@ use App\Entity\ContenuPanier;
 use App\Entity\Panier;
 use App\Entity\Produit;
 use App\Entity\Utilisateur;
+use App\Form\ProduitType;
 use App\Repository\PanierRepository;
-use App\Repository\ProduitRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use App\Form\ProduitType;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class ProduitController extends AbstractController
 {
-    // Page d'accueil : liste des produits
-    #[Route('/', name: 'app_accueil', methods: ['GET'])]
-    public function index(ProduitRepository $produitRepository): Response
-    {
-        return $this->render('produit/index.html.twig', [
-            'produits' => $produitRepository->findAll(),
-        ]);
-    }
-
     // Fiche détaillée d'un produit
-    #[Route('/produit/{id}',name: 'app_produit_show',requirements: ['id' => '\d+'],methods: ['GET'])]
+    #[Route('/produit/{id}', name: 'app_produit_show', requirements: ['id' => '\d+'], methods: ['GET'])]
     public function show(Produit $produit): Response
     {
         return $this->render('produit/show.html.twig', [
@@ -46,15 +38,13 @@ final class ProduitController extends AbstractController
         PanierRepository $panierRepository,
         EntityManagerInterface $entityManager
     ): Response {
-        // Vérifier le formulaire contre les requêtes frauduleuses
         if (!$this->isCsrfTokenValid(
             'ajouter_panier_' . $produit->getId(),
-            $request->request->get('_token')
+            (string) $request->request->get('_token')
         )) {
             throw $this->createAccessDeniedException('Jeton de sécurité invalide.');
         }
 
-        // L'utilisateur doit être connecté
         $utilisateur = $this->getUser();
 
         if (!$utilisateur instanceof Utilisateur) {
@@ -71,7 +61,7 @@ final class ProduitController extends AbstractController
             ]);
         }
 
-        // Récupérer le panier non payé ou en créer un nouveau
+        // Récupérer le panier non payé ou en créer un nouveau panier
         $panier = $panierRepository->findOneBy([
             'utilisateur' => $utilisateur,
             'etat' => false,
@@ -121,22 +111,18 @@ final class ProduitController extends AbstractController
             'id' => $produit->getId(),
         ]);
     }
-    
+
     // Ajouter un nouveau produit (administrateur)
-    #[Route('/produit/nouveau', name: 'app_produit_new', methods: ['GET', 'POST'])]
+    #[Route('/admin/produit/nouveau', name: 'app_produit_new', methods: ['GET', 'POST'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function new(
         Request $request,
         EntityManagerInterface $entityManager,
-        SluggerInterface $slugger
+        SluggerInterface $slugger,
+        TranslatorInterface $translator
     ): Response {
-        if (
-            !$this->isGranted('ROLE_ADMIN')
-            && !$this->isGranted('ROLE_SUPER_ADMIN')
-        ) {
-            throw $this->createAccessDeniedException();
-        }
-
         $produit = new Produit();
+
         $form = $this->createForm(ProduitType::class, $produit);
         $form->handleRequest($request);
 
@@ -145,39 +131,47 @@ final class ProduitController extends AbstractController
             $photoFile = $form->get('photoFile')->getData();
 
             if ($photoFile) {
-                $produit->setPhoto(
-                    $this->enregistrerPhoto($photoFile, $slugger)
-                );
+                try {
+                    $produit->setPhoto(
+                        $this->enregistrerPhoto($photoFile, $slugger)
+                    );
+                } catch (FileException $e) {
+                    $this->addFlash(
+                        'danger',
+                        'Une erreur est survenue lors de l’enregistrement de la photo.'
+                    );
+                }
             }
 
             $entityManager->persist($produit);
             $entityManager->flush();
 
-            $this->addFlash('success', 'Le produit a été ajouté.');
+            $this->addFlash(
+                'success',
+                $translator->trans('flash.product_created')
+            );
 
-            return $this->redirectToRoute('app_accueil');
+            return $this->redirectToRoute('app_produit_show', [
+                'id' => $produit->getId(),
+            ]);
         }
 
         return $this->render('produit/new.html.twig', [
-            'form' => $form,
+            'produit' => $produit,
+            'form' => $form->createView(),
         ]);
     }
 
     // Modifier un produit existant (administrateur)
-    #[Route('/produit/{id}/modifier', name: 'app_produit_edit', methods: ['GET', 'POST'])]
+    #[Route('/admin/produit/{id}/modifier', name: 'app_produit_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function edit(
         Produit $produit,
         Request $request,
         EntityManagerInterface $entityManager,
-        SluggerInterface $slugger
+        SluggerInterface $slugger,
+        TranslatorInterface $translator
     ): Response {
-        if (
-            !$this->isGranted('ROLE_ADMIN')
-            && !$this->isGranted('ROLE_SUPER_ADMIN')
-        ) {
-            throw $this->createAccessDeniedException();
-        }
-
         $form = $this->createForm(ProduitType::class, $produit);
         $form->handleRequest($request);
 
@@ -185,16 +179,38 @@ final class ProduitController extends AbstractController
             /** @var UploadedFile|null $photoFile */
             $photoFile = $form->get('photoFile')->getData();
 
-            // Si une nouvelle photo est envoyée, on remplace l'ancien nom.
             if ($photoFile) {
-                $produit->setPhoto(
-                    $this->enregistrerPhoto($photoFile, $slugger)
-                );
+                try {
+                    // Enregistrer  la nouvelle photo
+                    $nouvellePhoto = $this->enregistrerPhoto($photoFile, $slugger);
+
+                    // Supprimer l'ancienne photo après l'enregistrement réussi 
+                    $anciennePhoto = $produit->getPhoto();
+
+                    if ($anciennePhoto) {
+                        $ancienChemin = $this->getParameter('kernel.project_dir')
+                            . '/public/' . $anciennePhoto;
+
+                        if (file_exists($ancienChemin)) {
+                            @unlink($ancienChemin);
+                        }
+                    }
+
+                    $produit->setPhoto($nouvellePhoto);
+                } catch (FileException $e) {
+                    $this->addFlash(
+                        'danger',
+                        'Une erreur est survenue lors du téléversement de la photo.'
+                    );
+                }
             }
 
             $entityManager->flush();
 
-            $this->addFlash('success', 'Le produit a été modifié.');
+            $this->addFlash(
+                'success',
+                $translator->trans('flash.product_updated')
+            );
 
             return $this->redirectToRoute('app_produit_show', [
                 'id' => $produit->getId(),
@@ -203,42 +219,50 @@ final class ProduitController extends AbstractController
 
         return $this->render('produit/edit.html.twig', [
             'produit' => $produit,
-            'form' => $form,
+            'form' => $form->createView(),
         ]);
     }
 
-    // Supprimer un produit (administrateur)
-    #[Route('/produit/{id}/supprimer', name: 'app_produit_delete', methods: ['POST'])]
+    // Supprimer produit (administrateur)
+    #[Route('/admin/produit/{id}/supprimer', name: 'app_produit_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function delete(
         Produit $produit,
         Request $request,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        TranslatorInterface $translator
     ): Response {
-        if (
-            !$this->isGranted('ROLE_ADMIN')
-            && !$this->isGranted('ROLE_SUPER_ADMIN')
-        ) {
-            throw $this->createAccessDeniedException();
-        }
+        $token = $request->request->get('_token');
 
         if (!$this->isCsrfTokenValid(
-            'delete_produit_' . $produit->getId(),
-            $request->request->get('_token')
+            'delete_product_' . $produit->getId(),
+            (string) $token
         )) {
-            throw $this->createAccessDeniedException(
-                'Jeton de sécurité invalide.'
-            );
+            throw $this->createAccessDeniedException('Jeton CSRF invalide.');
+        }
+
+        // Supprimer également la photo du produit
+        if ($produit->getPhoto()) {
+            $filePath = $this->getParameter('kernel.project_dir')
+                . '/public/' . $produit->getPhoto();
+
+            if (file_exists($filePath)) {
+                @unlink($filePath);
+            }
         }
 
         $entityManager->remove($produit);
         $entityManager->flush();
 
-        $this->addFlash('success', 'Le produit a été supprimé.');
+        $this->addFlash(
+            'success',
+            $translator->trans('flash.product_deleted')
+        );
 
-        return $this->redirectToRoute('app_accueil');
+        return $this->redirectToRoute('app_home');
     }
 
-    // Enregistrer la photo dans public/uploads/produits
+    // Enregistrer une photo dans public/uploads/produits
     private function enregistrerPhoto(
         UploadedFile $photo,
         SluggerInterface $slugger
@@ -250,6 +274,7 @@ final class ProduitController extends AbstractController
 
         $nomSecurise = $slugger->slug($nomOriginal);
         $extension = $photo->guessExtension() ?? 'bin';
+
         $nomFichier = $nomSecurise . '-' . bin2hex(random_bytes(6))
             . '.' . $extension;
 
@@ -262,7 +287,6 @@ final class ProduitController extends AbstractController
 
         $photo->move($dossier, $nomFichier);
 
-        return $nomFichier;
+        return 'uploads/produits/' . $nomFichier;
     }
-
 }
