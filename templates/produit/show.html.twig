@@ -24,6 +24,7 @@
                 {% if produit.stock > 0 %}
                     <span class="badge badge-success">
                         {{ 'common.in_stock'|trans }} ({{ produit.stock }} {{ 'common.units'|trans }})
+                        
                     </span>
                 {% else %}
                     <span class="badge badge-danger">
