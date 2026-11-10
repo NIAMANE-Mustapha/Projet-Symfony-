@@ -8,7 +8,7 @@ Projet réalisé dans le cadre du cours de Symfony.
 - Zied Ghanem
 
 **Rendu pour :** `yoanncoualan`  
-**Date limite :** Dimanche 10 novembre 2026 à 23h59
+**Date limite :**  10 novembre 2026 à 23h59
 
 ---
 
